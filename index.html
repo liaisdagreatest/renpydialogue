@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ren'Py Script Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#201e1c; --sheet:#28251f; --card:#2c2823; --card2:#332e27; --rule:#3b3632;
+  --ink:#ece6dc; --dim:#8f867b; --amber:#c98a4b; --red:#b6402c; --red-soft:#6d2c22; --rose:#c9584a; --green:#8fae6a;
+  --line:#3b3632;
+  --serif:"Fraunces",serif; --sans:"Space Grotesk",ui-sans-serif,system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:1px}
+button{background:var(--card2);border:1px solid var(--rule);border-radius:2px;padding:7px 12px;cursor:pointer;transition:background .2s var(--ease),border-color .2s var(--ease),transform .2s var(--ease)}
+button:hover{background:var(--red);border-color:var(--red);color:var(--bg);transform:translateY(-1px)}
+button.go{background:var(--red);border-color:var(--red);color:var(--bg);font-weight:500}
+button.go:hover{background:#cf5138;border-color:#cf5138}
+button.bare{background:transparent}
+button.bare:hover{background:transparent;color:var(--red);border-color:var(--red);transform:none}
+button.x{color:var(--rose);padding:4px 8px;background:transparent;border-color:transparent}
+button.x:hover{background:var(--red-soft);border-color:var(--red-soft);color:var(--bg)}
+button.sm{padding:4px 8px;font-size:13px}
+input,textarea,select{background:var(--bg);border:1px solid var(--rule);border-radius:2px;padding:8px 9px;width:100%;transition:border-color .2s var(--ease)}
+input:hover,textarea:hover,select:hover{border-color:var(--dim)}
+input:focus,textarea:focus,select:focus{border-color:var(--red)}
+textarea{min-height:66px;resize:vertical;line-height:1.5}
+header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--red-soft);background:var(--sheet);position:sticky;top:0;z-index:5}
+.mark{font:600 16px/1 var(--serif);color:var(--bg);background:var(--red);padding:9px 11px;border-radius:2px;letter-spacing:-.01em}
+#title{width:190px;background:transparent;border-color:transparent;font-weight:500;padding:6px 8px;font-family:var(--serif);font-size:16px}
+#title:hover,#title:focus{border-color:var(--rule);background:var(--bg)}
+.grow{flex:1}
+.wrap{display:grid;grid-template-columns:250px minmax(420px,1fr) 440px;height:calc(100vh - 97px)}
+.col{overflow:auto;padding:16px}
+.left{background:var(--sheet);border-right:1px solid var(--line)}
+.right{background:var(--sheet);border-left:1px solid var(--line)}
+h2{font-size:12px;font-weight:500;color:var(--dim);margin:0 0 10px;letter-spacing:.02em;text-transform:none}
+.cast{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+.who{display:flex;align-items:center;gap:9px;padding:7px;border-radius:2px;border:1px solid transparent;position:relative;isolation:isolate;overflow:hidden;transition:color .25s var(--ease)}
+.who::before{content:"";position:absolute;inset:0;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease);z-index:-1}
+.who:hover::before{transform:scaleX(1)}
+.who:hover{color:var(--bg)}
+.who:hover span{color:var(--bg);opacity:.7}
+.chip{width:30px;height:30px;border-radius:2px;display:grid;place-items:center;font:500 13px var(--serif);background:var(--card2);flex:none;overflow:hidden}
+.chip img{width:100%;height:100%;object-fit:cover}
+.who b{display:block;font-weight:500;font-family:var(--serif);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who span{font:11px var(--mono);color:var(--dim);transition:color .25s var(--ease)}
+.add{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.add button{font-size:13px;padding:6px 10px}
+.line{border:1px solid var(--rule);border-radius:3px;background:var(--card);margin-bottom:9px;transition:border-color .25s var(--ease)}
+.line.on{border-color:var(--red)}
+.head{display:flex;align-items:center;gap:9px;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--rule)}
+.num{font:12px var(--mono);color:var(--dim);width:22px}
+.kind{font:11px var(--mono);color:var(--amber);background:var(--red-soft);border:1px solid var(--red-soft);padding:2px 7px;border-radius:2px}
+.head b{flex:1;font-weight:500;font-family:var(--serif);font-size:16px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.body{padding:11px;display:flex;flex-direction:column;gap:9px}
+.row{display:flex;gap:8px;align-items:center}
+.f{display:block}
+.f>i{display:block;font-size:11px;color:var(--dim);font-style:normal;margin-bottom:4px}
+.empty{color:var(--dim);text-align:center;padding:38px 14px;border:1px dashed var(--rule);border-radius:3px}
+.stage{border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;min-height:290px;margin-bottom:8px}
+.set{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:14px;position:relative;background:linear-gradient(175deg,#2c2823,var(--bg))}
+.bgtag{position:absolute;top:8px;left:10px;font:11px var(--mono);color:var(--dim)}
+.set img{max-height:170px;max-width:150px;object-fit:contain}
+.say{margin:0 12px 12px;padding:12px 14px;background:rgba(32,30,28,.92);border:1px solid var(--rule);border-radius:3px;min-height:74px}
+.say b{display:block;margin-bottom:4px;font-family:var(--serif);font-weight:500;font-size:15px}
+.say .opt{display:block;width:100%;text-align:left;margin-top:6px;font-size:14px;transition:transform .2s var(--ease)}
+.say .opt:hover{transform:translateX(3px);color:var(--red)}
+.step{display:flex;align-items:center;gap:8px;margin-bottom:16px;color:var(--dim);font-size:13px}
+pre{margin:0;padding:14px;background:#17140f;border:1px solid var(--rule);border-radius:3px;font:12.5px/1.65 var(--mono);white-space:pre;overflow:auto;max-height:52vh}
+pre i{font-style:normal}
+pre .k{color:var(--amber)}
+pre .s{color:var(--green)}
+pre .c{color:var(--dim)}
+.flags{margin:10px 0 0;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.flag{padding:7px 10px;border-radius:2px;background:var(--red-soft);border:1px solid var(--red-soft);color:#f2cfc6}
+.flag.ok{background:#26301f;border-color:#3a4a2e;color:#cfe0bd}
+.mask{position:fixed;inset:0;background:rgba(12,11,9,.72);display:none;place-items:center;padding:18px;z-index:20;backdrop-filter:blur(2px)}
+.mask.on{display:grid;animation:fadein .2s var(--ease)}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.box{width:min(460px,100%);background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:20px;animation:rise .25s var(--ease)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.box h3{margin:0 0 14px;font-size:19px;font-family:var(--serif);font-weight:500}
+.box .f{margin-bottom:11px}
+.ends{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.note{font-size:12px;color:var(--dim);line-height:1.5}
+.note code{color:var(--ink);background:var(--card2);padding:1px 5px;border-radius:2px;font-size:11px}
+.gh{text-decoration:none;color:var(--dim);position:relative;padding-bottom:2px;font-size:.78rem}
+.gh::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--dim);transform:scaleX(1);transform-origin:right;transition:transform .3s var(--ease),background .3s var(--ease)}
+.gh:hover{color:var(--ink)}
+.gh:hover::after{background:var(--red);transform-origin:left}
+.colophon{display:flex;justify-content:space-between;align-items:center;padding:10px 18px;border-top:1px solid var(--line);color:var(--dim);font-size:.74rem;background:var(--sheet)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--rule);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--red-soft)}
+::-webkit-scrollbar-track{background:transparent}
+@media(max-width:1180px){.wrap{grid-template-columns:230px 1fr}.right{display:none}}
+@media(max-width:760px){.wrap{display:block;height:auto}.left{border-right:0;border-bottom:1px solid var(--rule)}#title{width:120px}.hidesm{display:none}.colophon{flex-wrap:wrap;gap:4px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark">rpy</div>
+  <input id="title" value="script" onchange="p.title=this.value;out()" aria-label="File name">
+  <div class="grow"></div>
+  <button class="bare hidesm" onclick="fresh()">Clear</button>
+  <button class="bare hidesm" onclick="saveJson()">Save project</button>
+  <button class="bare hidesm" onclick="loadJson()">Open project</button>
+  <button class="go" onclick="download()">Download .rpy</button>
+</header>
+
+<div class="wrap">
+  <aside class="col left">
+    <h2>Cast</h2>
+    <div id="cast" class="cast"></div>
+    <button style="width:100%" onclick="openCast()">Add a character</button>
+    <p class="note" style="margin-top:14px">Each character becomes a <code>define</code> line. The short tag is what you type in the script, so keep it to a letter or two.</p>
+  </aside>
+
+  <main class="col">
+    <div class="add">
+      <button class="go" onclick="push('say')">Dialogue</button>
+      <button onclick="push('narrate')">Narration</button>
+      <button onclick="push('menu')">Choice</button>
+      <button onclick="push('label')">Label</button>
+      <button onclick="push('scene')">Scene</button>
+      <button onclick="push('show')">Show</button>
+      <button onclick="push('hide')">Hide</button>
+      <button onclick="push('jump')">Jump</button>
+      <button onclick="push('raw')">Raw code</button>
+    </div>
+    <div id="script"></div>
+  </main>
+
+  <section class="col right">
+    <h2>How it plays</h2>
+    <div id="stage" class="stage"></div>
+    <div class="step">
+      <button class="sm" onclick="step(-1)">Back</button>
+      <button class="sm" onclick="step(1)">Next</button>
+      <span id="pos"></span>
+    </div>
+
+    <h2 id="fileLabel">script.rpy</h2>
+    <pre id="code"></pre>
+    <div class="row" style="margin-top:8px">
+      <button id="copy" onclick="copyCode()">Copy code</button>
+      <button class="bare" onclick="download()">Download</button>
+    </div>
+    <div id="flags" class="flags"></div>
+  </section>
+</div>
+
+<footer class="colophon">
+  <span>built for writing Ren'Py dialogue, scene by scene</span>
+  <a class="gh" href="https://www.renpy.org/doc/html/quickstart.html" target="_blank" rel="noopener">renpy.org/quickstart</a>
+</footer>
+
+<div id="castModal" class="mask">
+  <div class="box">
+    <h3 id="castTitle">Add a character</h3>
+    <input id="cIdx" type="hidden">
+    <label class="f"><i>Name shown in game</i><input id="cName" placeholder="Eileen"></label>
+    <label class="f"><i>Short tag used in the script</i><input id="cId" placeholder="e"></label>
+    <div class="row">
+      <label class="f grow"><i>Name colour</i><input id="cColor" value="#c8ffc8"></label>
+      <input id="cPick" type="color" value="#c8ffc8" style="width:48px;padding:3px;align-self:flex-end" oninput="cColor.value=this.value" aria-label="Pick colour">
+    </div>
+    <label class="f"><i>Sprite file, if you have one</i><input id="cImg" placeholder="images/eileen happy.png"></label>
+    <p class="note">The sprite is declared as an image so <code>show</code> works, and it shows up in the preview here.</p>
+    <div class="ends"><button onclick="shut('castModal')">Cancel</button><button class="go" onclick="saveCast()">Save character</button></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const uid=()=>Math.random().toString(36).slice(2,9);
+
+let p={
+  title:"script",
+  characters:[{name:"Eileen",id:"e",color:"#c8ffc8",image:""}],
+  script:[
+    {t:"label",name:"start",id:uid()},
+    {t:"scene",bg:"bg room",with:"fade",id:uid()},
+    {t:"show",who:"e",at:"center",with:"dissolve",id:uid()},
+    {t:"say",who:"e",text:"You've created a new Ren'Py game.",id:uid()},
+    {t:"narrate",text:"The room was quiet, the way rooms are before anything happens in them.",id:uid()},
+    {t:"menu",prompt:"What do you say back?",options:[{text:"Thanks for the tour.",jump:""},{text:"Say nothing.",jump:""}],id:uid()}
+  ]
+};
+let cur=0;
+
+const NAMES={say:"Dialogue",narrate:"Narration",menu:"Choice",label:"Label",scene:"Scene",show:"Show",hide:"Hide",jump:"Jump",raw:"Raw code"};
+const byId=id=>p.characters.find(c=>c.id===id);
+const slug=s=>String(s||"").trim().toLowerCase().replace(/[^a-z0-9_]+/g,"_").replace(/^_+|_+$/g,"")||"label_"+Math.floor(Math.random()*900+100);
+const labels=()=>p.script.filter(s=>s.t==="label").map(s=>slug(s.name));
+
+/* ---------- Ren'Py generation ---------- */
+const Q=s=>String(s??"").replace(/\\/g,"\\\\").replace(/"/g,'\\"').replace(/\r?\n/g,"\\n");
+const I="    ";
+
+function generate(){
+  const L=[];
+  L.push("# "+(p.title||"script")+".rpy");
+  L.push("# Written with Ren'Py Script Builder.");
+  L.push("");
+  if(p.characters.length){
+    L.push("# Characters");
+    p.characters.forEach(c=>{
+      const a=['"'+Q(c.name)+'"'];
+      if(c.color) a.push('color="'+c.color+'"');
+      L.push("define "+c.id+" = Character("+a.join(", ")+")");
+    });
+    L.push("");
+  }
+  const sprites=p.characters.filter(c=>c.image);
+  if(sprites.length){
+    L.push("# Images");
+    sprites.forEach(c=>L.push("image "+c.id+' = "'+Q(c.image)+'"'));
+    L.push("");
+  }
+
+  let open=false,count=0,lastKind="";
+  const close=()=>{ if(open&&count===0) L.push(I+"pass"); };
+  function begin(name){
+    close();
+    if(open) L.push("");
+    L.push("label "+name+":");
+    L.push("");
+    open=true;count=0;
+  }
+  const emit=(line,kind)=>{L.push(I+line);count++;lastKind=kind||"";};
+
+  for(const s of p.script){
+    if(s.t==="label"){ begin(slug(s.name)); continue; }
+    if(!open) begin("start");
+    const w=s.with?" with "+slug(s.with):"";
+    if(s.t==="say"){
+      const c=byId(s.who);
+      emit((c?c.id:"narrator")+' "'+Q(s.text||"...")+'"');
+    }else if(s.t==="narrate"){
+      emit('"'+Q(s.text||"...")+'"');
+    }else if(s.t==="scene"){
+      emit("scene "+(s.bg||"black")+w);
+    }else if(s.t==="show"){
+      emit("show "+(s.who||"")+(s.at?" at "+s.at:"")+w);
+    }else if(s.t==="hide"){
+      emit("hide "+(s.who||"")+w);
+    }else if(s.t==="jump"){
+      emit("jump "+slug(s.target),"jump");
+    }else if(s.t==="raw"){
+      String(s.code||"").split("\n").forEach(l=>{ if(l.trim()) emit(l.replace(/^\s+/,m=>m)); });
+      lastKind="raw";
+    }else if(s.t==="menu"){
+      emit("menu:");
+      if(s.prompt) L.push(I+I+'"'+Q(s.prompt)+'"');
+      (s.options||[]).forEach(o=>{
+        L.push("");
+        L.push(I+I+'"'+Q(o.text||"...")+'":');
+        if(o.jump) L.push(I+I+I+"jump "+slug(o.jump));
+        else L.push(I+I+I+"pass");
+      });
+      L.push("");
+      lastKind="menu";
+    }
+  }
+  if(!open) begin("start");
+  close();
+  if(count>0 && lastKind!=="jump") L.push(I+"return");
+  L.push("");
+  return L.join("\n");
+}
+
+const KW=/\b(label|menu|jump|call|return|scene|show|hide|with|define|default|image|pass|at|as|play|stop|queue|init|python|if|elif|else|while)\b/g;
+function paint(src){
+  const e=s=>s.replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+  return src.split("\n").map(l=>{
+    if(/^\s*#/.test(l)) return '<i class="c">'+e(l)+"</i>";
+    let r="",last=0;
+    l.replace(/"(?:[^"\\]|\\.)*"/g,(m,i)=>{
+      r+=e(l.slice(last,i)).replace(KW,'<i class="k">$1</i>')+'<i class="s">'+e(m)+"</i>";
+      last=i+m.length;return m;
+    });
+    return r+e(l.slice(last)).replace(KW,'<i class="k">$1</i>');
+  }).join("\n");
+}
+
+function check(){
+  const f=[],ls=labels(),seen=new Set(),dupes=new Set();
+  ls.forEach(l=>seen.has(l)?dupes.add(l):seen.add(l));
+  dupes.forEach(l=>f.push("Two labels are both called "+l+". Ren'Py needs each one to be unique."));
+  p.script.forEach((s,i)=>{
+    const at="Line "+(i+1)+": ";
+    if(s.t==="jump"&&!seen.has(slug(s.target))) f.push(at+"jumps to "+slug(s.target)+", which no label defines.");
+    if(s.t==="menu"){
+      if(!(s.options||[]).length) f.push(at+"a choice needs at least one option.");
+      (s.options||[]).forEach(o=>{ if(o.jump&&!seen.has(slug(o.jump))) f.push(at+'the option "'+o.text+'" jumps to '+slug(o.jump)+", which no label defines."); });
+    }
+    if((s.t==="show"||s.t==="hide")&&!byId(s.who)) f.push(at+"no character matches that tag.");
+    if((s.t==="say"||s.t==="narrate")&&!String(s.text||"").trim()) f.push(at+"the text is empty, so it will read as \u201C...\u201D.");
+  });
+  return f;
+}
+
+/* ---------- editor ---------- */
+function drawCast(){
+  $("cast").innerHTML=p.characters.length?p.characters.map((c,i)=>`
+    <div class="who">
+      <div class="chip" style="color:${esc(c.color)}">${c.image?`<img src="${esc(c.image)}" alt="" onerror="this.remove()">`:esc((c.name||"?")[0])}</div>
+      <div style="flex:1;min-width:0"><b>${esc(c.name)}</b><span>${esc(c.id)}</span></div>
+      <button class="sm bare" onclick="editCast(${i})" aria-label="Edit">Edit</button>
+      <button class="x" onclick="dropCast(${i})" aria-label="Remove">&times;</button>
+    </div>`).join(""):'<div class="empty">Nobody in the cast yet. Add a character to start writing dialogue.</div>';
+}
+
+const fText=(i,k,v,ph)=>`<textarea placeholder="${esc(ph)}" oninput="set(${i},'${k}',this.value)">${esc(v)}</textarea>`;
+const fIn=(i,k,v,ph)=>`<input value="${esc(v)}" placeholder="${esc(ph)}" oninput="set(${i},'${k}',this.value)">`;
+const fWho=(i,v)=>`<select onchange="set(${i},'who',this.value,1)">${p.characters.map(c=>`<option value="${esc(c.id)}"${c.id===v?" selected":""}>${esc(c.name)} (${esc(c.id)})</option>`).join("")}</select>`;
+const fLab=(i,k,v)=>`<select onchange="set(${i},'${k}',this.value,1)"><option value="">Carry on to the next line</option>${labels().map(l=>`<option value="${esc(l)}"${l===slug(v)&&v?" selected":""}>${esc(l)}</option>`).join("")}</select>`;
+const fWith=(i,v)=>`<select onchange="set(${i},'with',this.value,1)">${["","dissolve","fade","pixellate","move"].map(t=>`<option value="${t}"${t===v?" selected":""}>${t||"No transition"}</option>`).join("")}</select>`;
+
+function drawScript(){
+  if(!p.script.length){$("script").innerHTML='<div class="empty">The script is empty. Add a label, then start the dialogue.</div>';return}
+  $("script").innerHTML=p.script.map((s,i)=>{
+    let head="",body="";
+    if(s.t==="say"){
+      const c=byId(s.who);head=c?c.name:"Pick a character";
+      body=(p.characters.length?`<label class="f"><i>Speaking</i>${fWho(i,s.who)}</label>`:'<p class="note">Add a character on the left first.</p>')
+        +fText(i,"text",s.text,"What do they say?");
+    }else if(s.t==="narrate"){
+      head="Narration";body=fText(i,"text",s.text,"Unspoken text, shown with no name above it");
+    }else if(s.t==="label"){
+      head=slug(s.name);body=`<label class="f"><i>Label name</i>${fIn(i,"name",s.name,"start")}</label>`;
+    }else if(s.t==="scene"){
+      head=s.bg||"Scene";
+      body=`<div class="row"><label class="f grow"><i>Background image</i>${fIn(i,"bg",s.bg,"bg room")}</label><label class="f" style="width:150px"><i>Transition</i>${fWith(i,s.with)}</label></div>`;
+    }else if(s.t==="show"||s.t==="hide"){
+      const c=byId(s.who);head=(s.t==="show"?"Show ":"Hide ")+(c?c.name:"?");
+      body=`<div class="row"><label class="f grow"><i>Character</i>${fWho(i,s.who)}</label>`
+        +(s.t==="show"?`<label class="f" style="width:130px"><i>Position</i><select onchange="set(${i},'at',this.value,1)">${["center","left","right","truecenter"].map(a=>`<option${a===s.at?" selected":""}>${a}</option>`).join("")}</select></label>`:"")
+        +`<label class="f" style="width:150px"><i>Transition</i>${fWith(i,s.with)}</label></div>`;
+    }else if(s.t==="jump"){
+      head="Jump to "+(slug(s.target)||"?");
+      body=`<label class="f"><i>Go to label</i><select onchange="set(${i},'target',this.value,1)">${labels().map(l=>`<option${l===slug(s.target)?" selected":""}>${esc(l)}</option>`).join("")||"<option>start</option>"}</select></label>`;
+    }else if(s.t==="raw"){
+      head="Raw Ren'Py";
+      body=fText(i,"code",s.code,"play music \"audio/theme.ogg\"")+'<p class="note">Pasted in as-is, indented inside the label.</p>';
+    }else if(s.t==="menu"){
+      head=s.prompt||"Choice";
+      body=`<label class="f"><i>Prompt</i>${fIn(i,"prompt",s.prompt,"What do you do?")}</label>`
+        +(s.options||[]).map((o,j)=>`<div class="row">
+            <input value="${esc(o.text)}" placeholder="Option text" oninput="setOpt(${i},${j},'text',this.value)">
+            <div style="width:190px">${`<select onchange="setOpt(${i},${j},'jump',this.value,1)"><option value="">Carry on</option>${labels().map(l=>`<option value="${esc(l)}"${l===slug(o.jump)&&o.jump?" selected":""}>Jump to ${esc(l)}</option>`).join("")}</select>`}</div>
+            <button class="x" onclick="dropOpt(${i},${j})" aria-label="Remove option">&times;</button>
+          </div>`).join("")
+        +`<button class="sm" style="align-self:flex-start" onclick="addOpt(${i})">Add option</button>`;
+    }
+    return `<article class="line${i===cur?" on":""}" id="ln${s.id}">
+      <div class="head" onclick="pick(${i})">
+        <span class="num">${String(i+1).padStart(2,"0")}</span>
+        <span class="kind">${NAMES[s.t]}</span>
+        <b>${esc(head)}</b>
+        <button class="sm bare" onclick="event.stopPropagation();move(${i},-1)" aria-label="Move up">&uarr;</button>
+        <button class="sm bare" onclick="event.stopPropagation();move(${i},1)" aria-label="Move down">&darr;</button>
+        <button class="sm bare" onclick="event.stopPropagation();clone(${i})" aria-label="Duplicate">Copy</button>
+        <button class="x" onclick="event.stopPropagation();drop(${i})" aria-label="Delete">&times;</button>
+      </div>
+      <div class="body">${body}</div>
+    </article>`;
+  }).join("");
+}
+
+function drawStage(){
+  const s=p.script[cur];
+  $("pos").textContent=p.script.length?`Line ${cur+1} of ${p.script.length}`:"Nothing to preview";
+  if(!s){$("stage").innerHTML='<div class="set"></div><div class="say"><b>&nbsp;</b>Add a line to see it here.</div>';return}
+  let bg="",shown=[];
+  for(let i=0;i<=cur;i++){
+    const q=p.script[i];
+    if(q.t==="scene"){bg=q.bg;shown=[]}
+    if(q.t==="show"&&!shown.includes(q.who))shown.push(q.who);
+    if(q.t==="hide")shown=shown.filter(w=>w!==q.who);
+  }
+  if(s.t==="say"&&!shown.includes(s.who))shown.push(s.who);
+  const art=shown.map(byId).filter(c=>c&&c.image).map(c=>`<img src="${esc(c.image)}" alt="${esc(c.name)}" onerror="this.remove()">`).join("");
+  let box="";
+  if(s.t==="say"){const c=byId(s.who);box=`<b style="color:${esc(c?.color||"#fff")}">${esc(c?.name||s.who||"?")}</b>${esc(s.text||"…")}`}
+  else if(s.t==="narrate")box=esc(s.text||"…");
+  else if(s.t==="menu")box=`${esc(s.prompt||"")}${(s.options||[]).map((o,j)=>`<button class="opt" onclick="pick(${cur})">${esc(o.text||"…")}</button>`).join("")}`;
+  else box=`<span class="note">${esc(NAMES[s.t])} — nothing is shown to the player here.</span>`;
+  $("stage").innerHTML=`<div class="set">${bg?`<span class="bgtag">${esc(bg)}</span>`:""}${art}</div><div class="say">${box}</div>`;
+}
+
+function out(){
+  const code=generate();
+  $("code").innerHTML=paint(code);
+  $("fileLabel").textContent=(p.title||"script")+".rpy";
+  const f=check();
+  $("flags").innerHTML=f.length?f.map(x=>`<div class="flag">${esc(x)}</div>`).join("")
+    :'<div class="flag ok">No problems found. Drop this in your game folder and press Run.</div>';
+  drawStage();
+}
+function render(){drawCast();drawScript();out()}
+
+function set(i,k,v,hard){p.script[i][k]=v;cur=i;if(hard)render();else{const h=document.querySelector(`#ln${p.script[i].id} .head b`);if(h)h.textContent=headline(i);out()}}
+function headline(i){const s=p.script[i];
+  if(s.t==="say")return (byId(s.who)||{}).name||"Pick a character";
+  if(s.t==="label")return slug(s.name);
+  if(s.t==="scene")return s.bg||"Scene";
+  if(s.t==="menu")return s.prompt||"Choice";
+  if(s.t==="raw")return "Raw Ren'Py";
+  if(s.t==="narrate")return "Narration";
+  return NAMES[s.t];}
+function setOpt(i,j,k,v,hard){p.script[i].options[j][k]=v;cur=i;hard?render():out()}
+function addOpt(i){p.script[i].options.push({text:"",jump:""});render()}
+function dropOpt(i,j){p.script[i].options.splice(j,1);render()}
+
+function blank(t){
+  const first=p.characters[0]?p.characters[0].id:"";
+  return {say:{t:"say",who:first,text:""},narrate:{t:"narrate",text:""},
+    label:{t:"label",name:"scene_"+(labels().length+1)},
+    scene:{t:"scene",bg:"bg room",with:"fade"},
+    show:{t:"show",who:first,at:"center",with:"dissolve"},
+    hide:{t:"hide",who:first,with:"dissolve"},
+    jump:{t:"jump",target:labels()[0]||"start"},
+    raw:{t:"raw",code:""},
+    menu:{t:"menu",prompt:"What do you do?",options:[{text:"",jump:""},{text:"",jump:""}]}}[t];
+}
+function push(t){
+  if((t==="say"||t==="show"||t==="hide")&&!p.characters.length){openCast();return}
+  const n=Object.assign(blank(t),{id:uid()});
+  p.script.splice(cur+1||p.script.length,0,n);
+  cur=Math.min(cur+1,p.script.length-1);
+  render();
+  document.getElementById("ln"+n.id)?.scrollIntoView({block:"nearest"});
+}
+function pick(i){cur=i;render()}
+function step(d){if(!p.script.length)return;cur=Math.max(0,Math.min(p.script.length-1,cur+d));render();document.getElementById("ln"+p.script[cur].id)?.scrollIntoView({block:"nearest"})}
+function move(i,d){const n=i+d;if(n<0||n>=p.script.length)return;[p.script[i],p.script[n]]=[p.script[n],p.script[i]];cur=n;render()}
+function clone(i){p.script.splice(i+1,0,Object.assign({},JSON.parse(JSON.stringify(p.script[i])),{id:uid()}));cur=i+1;render()}
+function drop(i){p.script.splice(i,1);cur=Math.max(0,Math.min(cur,p.script.length-1));render()}
+
+/* ---------- cast ---------- */
+function openCast(){$("cIdx").value="";$("castTitle").textContent="Add a character";$("cName").value="";$("cId").value="";$("cColor").value="#c8ffc8";$("cPick").value="#c8ffc8";$("cImg").value="";$("castModal").classList.add("on");$("cName").focus()}
+function editCast(i){const c=p.characters[i];$("cIdx").value=i;$("castTitle").textContent="Edit "+c.name;$("cName").value=c.name;$("cId").value=c.id;$("cColor").value=c.color||"#ffffff";$("cPick").value=/^#[0-9a-f]{6}$/i.test(c.color||"")?c.color:"#ffffff";$("cImg").value=c.image||"";$("castModal").classList.add("on")}
+function shut(id){$(id).classList.remove("on")}
+function saveCast(){
+  const name=$("cName").value.trim()||"Character";
+  let id=($("cId").value.trim()||name).toLowerCase().replace(/[^a-z0-9_]+/g,"_").replace(/^[^a-z_]+/,"")||"c";
+  const taken=p.characters.filter((c,i)=>String(i)!==$("cIdx").value).map(c=>c.id);
+  while(taken.includes(id)) id+="_";
+  const next={name,id,color:$("cColor").value.trim()||"#ffffff",image:$("cImg").value.trim()};
+  const idx=$("cIdx").value;
+  if(idx===""){p.characters.push(next)}
+  else{const old=p.characters[+idx];p.characters[+idx]=next;p.script.forEach(s=>{if(s.who===old.id)s.who=next.id})}
+  shut("castModal");render();
+}
+function dropCast(i){
+  const c=p.characters[i];
+  if(p.script.some(s=>s.who===c.id)&&!confirm(c.name+" still has lines. Remove anyway? Those lines will lose their speaker.")) return;
+  p.characters.splice(i,1);render();
+}
+
+/* ---------- files ---------- */
+async function copyCode(){
+  const text=generate();
+  try{await navigator.clipboard.writeText(text)}
+  catch(e){const a=document.createElement("textarea");a.value=text;a.style.cssText="position:fixed;opacity:0";document.body.append(a);a.select();document.execCommand("copy");a.remove()}
+  $("copy").textContent="Copied";setTimeout(()=>$("copy").textContent="Copy code",1200);
+}
+function grab(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),800)}
+function download(){grab(new Blob([generate()],{type:"text/plain"}),(p.title||"script")+".rpy")}
+function saveJson(){grab(new Blob([JSON.stringify(p,null,2)],{type:"application/json"}),(p.title||"script")+".json")}
+function loadJson(){
+  const i=document.createElement("input");i.type="file";i.accept=".json";
+  i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.script))throw 0;
+      d.script.forEach(s=>{s.id=s.id||uid();if(s.type&&!s.t)s.t={dialogue:"say",you:"narrate",choice:"menu",scene:"label"}[s.type]||s.type});
+      p=Object.assign({title:"script",characters:[],script:[]},d);$("title").value=p.title;cur=0;render();
+    }catch(e){alert("That file isn't a project saved from this builder.")}};
+    r.readAsText(f)};
+  i.click();
+}
+function fresh(){if(confirm("Clear the script and start over?")){p={title:"script",characters:[],script:[]};$("title").value="script";cur=0;render()}}
+
+addEventListener("keydown",e=>{
+  if(e.key==="Escape")document.querySelectorAll(".mask.on").forEach(m=>m.classList.remove("on"));
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="s"){e.preventDefault();download()}
+});
+$("castModal").addEventListener("click",e=>{if(e.target.id==="castModal")shut("castModal")});
+render();
+</script>
+</body>
+</html>
