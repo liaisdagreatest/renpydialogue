@@ -40,10 +40,11 @@ header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:
 #title{width:190px;background:transparent;border-color:transparent;font-weight:500;padding:6px 8px;font-family:var(--serif);font-size:16px}
 #title:hover,#title:focus{border-color:var(--rule);background:var(--bg)}
 .grow{flex:1}
-.wrap{display:grid;grid-template-columns:250px minmax(420px,1fr) 440px;height:calc(100vh - 97px)}
+.wrap{display:grid;grid-template-columns:270px minmax(420px,1fr) 440px;height:calc(100vh - 97px)}
 .col{overflow:auto;padding:16px}
 .left{background:var(--sheet);border-right:1px solid var(--line)}
 .right{background:var(--sheet);border-left:1px solid var(--line)}
+.rule{border:0;border-top:1px solid var(--line);margin:16px 0}
 h2{font-size:12px;font-weight:500;color:var(--dim);margin:0 0 10px;letter-spacing:.02em;text-transform:none}
 .cast{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
 .who{display:flex;align-items:center;gap:9px;padding:7px;border-radius:2px;border:1px solid transparent;position:relative;isolation:isolate;overflow:hidden;transition:color .25s var(--ease)}
@@ -55,8 +56,13 @@ h2{font-size:12px;font-weight:500;color:var(--dim);margin:0 0 10px;letter-spacin
 .chip img{width:100%;height:100%;object-fit:cover}
 .who b{display:block;font-weight:500;font-family:var(--serif);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .who span{font:11px var(--mono);color:var(--dim);transition:color .25s var(--ease)}
-.add{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.add button{font-size:13px;padding:6px 10px}
+.add{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.add button{font-size:12.5px;padding:7px 8px}
+.settings-btn{width:100%;text-align:left;display:flex;align-items:center;gap:8px}
+.settings-btn .gear{color:var(--amber);font-size:13px}
+.check{display:flex;align-items:center;gap:9px;margin-bottom:11px;cursor:pointer}
+.check input{width:auto;accent-color:var(--red)}
+.check span{font-size:13.5px}
 .line{border:1px solid var(--rule);border-radius:3px;background:var(--card);margin-bottom:9px;transition:border-color .25s var(--ease)}
 .line.on{border-color:var(--red)}
 .head{display:flex;align-items:center;gap:9px;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--rule)}
@@ -104,7 +110,7 @@ pre .c{color:var(--dim)}
 ::-webkit-scrollbar-thumb{background:var(--rule);border-radius:6px}
 ::-webkit-scrollbar-thumb:hover{background:var(--red-soft)}
 ::-webkit-scrollbar-track{background:transparent}
-@media(max-width:1180px){.wrap{grid-template-columns:230px 1fr}.right{display:none}}
+@media(max-width:1180px){.wrap{grid-template-columns:250px 1fr}.right{display:none}}
 @media(max-width:760px){.wrap{display:block;height:auto}.left{border-right:0;border-bottom:1px solid var(--rule)}#title{width:120px}.hidesm{display:none}.colophon{flex-wrap:wrap;gap:4px}}
 </style>
 </head>
@@ -126,20 +132,29 @@ pre .c{color:var(--dim)}
     <div id="cast" class="cast"></div>
     <button style="width:100%" onclick="openCast()">Add a character</button>
     <p class="note" style="margin-top:14px">Each character becomes a <code>define</code> line. The short tag is what you type in the script, so keep it to a letter or two.</p>
-  </aside>
 
-  <main class="col">
+    <hr class="rule">
+    <h2>Add a line</h2>
     <div class="add">
-      <button class="go" onclick="push('say')">Dialogue</button>
+      <button class="go" onclick="push('say')" style="grid-column:1/-1">Dialogue</button>
       <button onclick="push('narrate')">Narration</button>
+      <button onclick="push('pause')">Pause</button>
       <button onclick="push('menu')">Choice</button>
       <button onclick="push('label')">Label</button>
       <button onclick="push('scene')">Scene</button>
       <button onclick="push('show')">Show</button>
       <button onclick="push('hide')">Hide</button>
       <button onclick="push('jump')">Jump</button>
-      <button onclick="push('raw')">Raw code</button>
+      <button onclick="push('raw')" style="grid-column:1/-1">Raw code</button>
     </div>
+
+    <hr class="rule">
+    <h2>Settings</h2>
+    <button class="settings-btn" onclick="openSettings()"><span class="gear">&#9881;</span> Advanced settings</button>
+    <p class="note" style="margin-top:10px">Text speed, skipping, rollback, auto-forward and window size. Text speed defaults to 30 characters per second.</p>
+  </aside>
+
+  <main class="col">
     <div id="script"></div>
   </main>
 
@@ -183,6 +198,23 @@ pre .c{color:var(--dim)}
   </div>
 </div>
 
+<div id="settingsModal" class="mask">
+  <div class="box">
+    <h3>Advanced settings</h3>
+    <label class="f"><i>Text speed (characters per second)</i><input id="sCps" type="number" min="0" step="1" placeholder="30"></label>
+    <label class="f"><i>Auto-forward after this many seconds (blank = off)</i><input id="sAfm" type="number" min="0" step="0.5" placeholder="off"></label>
+    <label class="check"><input id="sSkip" type="checkbox"><span>Let players skip unseen text, not just lines they've already read</span></label>
+    <label class="check"><input id="sRollback" type="checkbox" checked><span>Allow rollback (scroll wheel / Page Up)</span></label>
+    <label class="f"><i>Window title (blank = Ren'Py default)</i><input id="sName" placeholder="My Visual Novel"></label>
+    <div class="row">
+      <label class="f grow"><i>Window width</i><input id="sWidth" type="number" min="0" placeholder="1280"></label>
+      <label class="f grow"><i>Window height</i><input id="sHeight" type="number" min="0" placeholder="720"></label>
+    </div>
+    <p class="note">These become <code>define config...</code> lines near the top of the file. Leave a field blank or unchecked to keep Ren'Py's own default.</p>
+    <div class="ends"><button onclick="shut('settingsModal')">Cancel</button><button class="go" onclick="saveSettings()">Save settings</button></div>
+  </div>
+</div>
+
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -190,19 +222,21 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 
 let p={
   title:"script",
+  settings:{cps:30,afm:0,skip:false,rollback:true,name:"",width:0,height:0},
   characters:[{name:"Eileen",id:"e",color:"#c8ffc8",image:""}],
   script:[
     {t:"label",name:"start",id:uid()},
     {t:"scene",bg:"bg room",with:"fade",id:uid()},
     {t:"show",who:"e",at:"center",with:"dissolve",id:uid()},
     {t:"say",who:"e",text:"You've created a new Ren'Py game.",id:uid()},
+    {t:"pause",seconds:"0.5",id:uid()},
     {t:"narrate",text:"The room was quiet, the way rooms are before anything happens in them.",id:uid()},
     {t:"menu",prompt:"What do you say back?",options:[{text:"Thanks for the tour.",jump:""},{text:"Say nothing.",jump:""}],id:uid()}
   ]
 };
 let cur=0;
 
-const NAMES={say:"Dialogue",narrate:"Narration",menu:"Choice",label:"Label",scene:"Scene",show:"Show",hide:"Hide",jump:"Jump",raw:"Raw code"};
+const NAMES={say:"Dialogue",narrate:"Narration",pause:"Pause",menu:"Choice",label:"Label",scene:"Scene",show:"Show",hide:"Hide",jump:"Jump",raw:"Raw code"};
 const byId=id=>p.characters.find(c=>c.id===id);
 const slug=s=>String(s||"").trim().toLowerCase().replace(/[^a-z0-9_]+/g,"_").replace(/^_+|_+$/g,"")||"label_"+Math.floor(Math.random()*900+100);
 const labels=()=>p.script.filter(s=>s.t==="label").map(s=>slug(s.name));
@@ -215,6 +249,16 @@ function generate(){
   const L=[];
   L.push("# "+(p.title||"script")+".rpy");
   L.push("# Written with Ren'Py Script Builder, for Ren'Py 8.1.0.");
+  L.push("");
+  const st=p.settings||{};
+  L.push("# Settings");
+  const cps=Number.isFinite(st.cps)?st.cps:parseInt(st.cps,10);
+  L.push("define config.text_cps = "+(Number.isFinite(cps)?Math.max(0,cps):30));
+  if(st.skip) L.push("define config.allow_skipping = True");
+  if(st.rollback===false) L.push("define config.rollback_enabled = False");
+  if(st.afm) L.push("define config.afm_time = "+st.afm);
+  if(st.name) L.push('define config.name = _("'+Q(st.name)+'")');
+  if(st.width&&st.height){ L.push("define config.screen_width = "+parseInt(st.width,10)); L.push("define config.screen_height = "+parseInt(st.height,10)); }
   L.push("");
   if(p.characters.length){
     L.push("# Characters");
@@ -252,6 +296,9 @@ function generate(){
       emit((c?c.id:"narrator")+' "'+Q(s.text||"...")+'"');
     }else if(s.t==="narrate"){
       emit('"'+Q(s.text||"...")+'"');
+    }else if(s.t==="pause"){
+      const secs=String(s.seconds||"").trim();
+      emit(secs?"pause "+secs:"pause","pause");
     }else if(s.t==="scene"){
       emit("scene "+(s.bg||"black")+w);
     }else if(s.t==="show"){
@@ -283,7 +330,7 @@ function generate(){
   return L.join("\n");
 }
 
-const KW=/\b(label|menu|jump|call|return|scene|show|hide|with|define|default|image|pass|at|as|play|stop|queue|init|python|if|elif|else|while)\b/g;
+const KW=/\b(label|menu|jump|call|return|scene|show|hide|with|define|default|image|pass|pause|at|as|play|stop|queue|init|python|if|elif|else|while)\b/g;
 function paint(src){
   const e=s=>s.replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
   return src.split("\n").map(l=>{
@@ -310,6 +357,7 @@ function check(){
     }
     if((s.t==="show"||s.t==="hide")&&!byId(s.who)) f.push(at+"no character matches that tag.");
     if((s.t==="say"||s.t==="narrate")&&!String(s.text||"").trim()) f.push(at+"the text is empty, so it will read as \u201C...\u201D.");
+    if(s.t==="pause"&&String(s.seconds||"").trim()&&isNaN(parseFloat(s.seconds))) f.push(at+"the pause length isn't a number.");
   });
   return f;
 }
@@ -341,6 +389,9 @@ function drawScript(){
         +fText(i,"text",s.text,"What do they say?");
     }else if(s.t==="narrate"){
       head="Narration";body=fText(i,"text",s.text,"Unspoken text, shown with no name above it");
+    }else if(s.t==="pause"){
+      head=s.seconds?s.seconds+"s pause":"Click to continue";
+      body=`<label class="f"><i>Length in seconds (blank = wait for a click)</i>${fIn(i,"seconds",s.seconds,"e.g. 1.5")}</label>`;
     }else if(s.t==="label"){
       head=slug(s.name);body=`<label class="f"><i>Label name</i>${fIn(i,"name",s.name,"start")}</label>`;
     }else if(s.t==="scene"){
@@ -399,6 +450,7 @@ function drawStage(){
   if(s.t==="say"){const c=byId(s.who);box=`<b style="color:${esc(c?.color||"#fff")}">${esc(c?.name||s.who||"?")}</b>${esc(s.text||"…")}`}
   else if(s.t==="narrate")box=esc(s.text||"…");
   else if(s.t==="menu")box=`${esc(s.prompt||"")}${(s.options||[]).map((o,j)=>`<button class="opt" onclick="pick(${cur})">${esc(o.text||"…")}</button>`).join("")}`;
+  else if(s.t==="pause")box=`<span class="note">&#9208; Pause — ${s.seconds?esc(s.seconds)+" seconds":"waits for a click"} before the next line.</span>`;
   else box=`<span class="note">${esc(NAMES[s.t])} — nothing is shown to the player here.</span>`;
   $("stage").innerHTML=`<div class="set">${bg?`<span class="bgtag">${esc(bg)}</span>`:""}${art}</div><div class="say">${box}</div>`;
 }
@@ -422,6 +474,7 @@ function headline(i){const s=p.script[i];
   if(s.t==="menu")return s.prompt||"Choice";
   if(s.t==="raw")return "Raw Ren'Py";
   if(s.t==="narrate")return "Narration";
+  if(s.t==="pause")return s.seconds?s.seconds+"s pause":"Click to continue";
   return NAMES[s.t];}
 function setOpt(i,j,k,v,hard){p.script[i].options[j][k]=v;cur=i;hard?render():out()}
 function addOpt(i){p.script[i].options.push({text:"",jump:""});render()}
@@ -430,6 +483,7 @@ function dropOpt(i,j){p.script[i].options.splice(j,1);render()}
 function blank(t){
   const first=p.characters[0]?p.characters[0].id:"";
   return {say:{t:"say",who:first,text:""},narrate:{t:"narrate",text:""},
+    pause:{t:"pause",seconds:""},
     label:{t:"label",name:"scene_"+(labels().length+1)},
     scene:{t:"scene",bg:"bg room",with:"fade"},
     show:{t:"show",who:first,at:"center",with:"dissolve"},
@@ -473,6 +527,33 @@ function dropCast(i){
   p.characters.splice(i,1);render();
 }
 
+/* ---------- settings ---------- */
+function openSettings(){
+  const s=Object.assign({cps:30,afm:0,skip:false,rollback:true,name:"",width:0,height:0},p.settings);
+  $("sCps").value=s.cps;
+  $("sAfm").value=s.afm||"";
+  $("sSkip").checked=!!s.skip;
+  $("sRollback").checked=s.rollback!==false;
+  $("sName").value=s.name||"";
+  $("sWidth").value=s.width||"";
+  $("sHeight").value=s.height||"";
+  $("settingsModal").classList.add("on");
+}
+function saveSettings(){
+  const cps=parseInt($("sCps").value,10);
+  p.settings={
+    cps:isNaN(cps)?30:Math.max(0,cps),
+    afm:parseFloat($("sAfm").value)||0,
+    skip:$("sSkip").checked,
+    rollback:$("sRollback").checked,
+    name:$("sName").value.trim(),
+    width:parseInt($("sWidth").value,10)||0,
+    height:parseInt($("sHeight").value,10)||0
+  };
+  shut("settingsModal");
+  out();
+}
+
 /* ---------- files ---------- */
 async function copyCode(){
   const text=generate();
@@ -488,18 +569,21 @@ function loadJson(){
   i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();
     r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.script))throw 0;
       d.script.forEach(s=>{s.id=s.id||uid();if(s.type&&!s.t)s.t={dialogue:"say",you:"narrate",choice:"menu",scene:"label"}[s.type]||s.type});
-      p=Object.assign({title:"script",characters:[],script:[]},d);$("title").value=p.title;cur=0;render();
+      p=Object.assign({title:"script",characters:[],script:[],settings:{cps:30,afm:0,skip:false,rollback:true,name:"",width:0,height:0}},d);
+      p.settings=Object.assign({cps:30,afm:0,skip:false,rollback:true,name:"",width:0,height:0},p.settings||{});
+      $("title").value=p.title;cur=0;render();
     }catch(e){alert("That file isn't a project saved from this builder.")}};
     r.readAsText(f)};
   i.click();
 }
-function fresh(){if(confirm("Clear the script and start over?")){p={title:"script",characters:[],script:[]};$("title").value="script";cur=0;render()}}
+function fresh(){if(confirm("Clear the script and start over?")){p={title:"script",characters:[],script:[],settings:{cps:30,afm:0,skip:false,rollback:true,name:"",width:0,height:0}};$("title").value="script";cur=0;render()}}
 
 addEventListener("keydown",e=>{
   if(e.key==="Escape")document.querySelectorAll(".mask.on").forEach(m=>m.classList.remove("on"));
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="s"){e.preventDefault();download()}
 });
 $("castModal").addEventListener("click",e=>{if(e.target.id==="castModal")shut("castModal")});
+$("settingsModal").addEventListener("click",e=>{if(e.target.id==="settingsModal")shut("settingsModal")});
 render();
 </script>
 </body>
