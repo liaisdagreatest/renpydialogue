@@ -210,7 +210,7 @@ pre .c{color:var(--dim)}
       <label class="f grow"><i>Window width</i><input id="sWidth" type="number" min="0" placeholder="1280"></label>
       <label class="f grow"><i>Window height</i><input id="sHeight" type="number" min="0" placeholder="720"></label>
     </div>
-    <p class="note">These become <code>define config...</code> lines near the top of the file. Leave a field blank or unchecked to keep Ren'Py's own default.</p>
+    <p class="note">These become <code>default preferences...</code> or <code>define config...</code> lines near the top of the file. Leave a field blank or unchecked to keep Ren'Py's own default.</p>
     <div class="ends"><button onclick="shut('settingsModal')">Cancel</button><button class="go" onclick="saveSettings()">Save settings</button></div>
   </div>
 </div>
@@ -253,10 +253,10 @@ function generate(){
   const st=p.settings||{};
   L.push("# Settings");
   const cps=Number.isFinite(st.cps)?st.cps:parseInt(st.cps,10);
-  L.push("define config.text_cps = "+(Number.isFinite(cps)?Math.max(0,cps):30));
-  if(st.skip) L.push("define config.allow_skipping = True");
+  L.push("default preferences.text_cps = "+(Number.isFinite(cps)?Math.max(0,cps):30));
+  if(st.skip) L.push("default preferences.skip_unseen = True");
   if(st.rollback===false) L.push("define config.rollback_enabled = False");
-  if(st.afm) L.push("define config.afm_time = "+st.afm);
+  if(st.afm){ L.push("default preferences.afm_enable = True"); L.push("default preferences.afm_time = "+st.afm); }
   if(st.name) L.push('define config.name = _("'+Q(st.name)+'")');
   if(st.width&&st.height){ L.push("define config.screen_width = "+parseInt(st.width,10)); L.push("define config.screen_height = "+parseInt(st.height,10)); }
   L.push("");
@@ -330,7 +330,7 @@ function generate(){
   return L.join("\n");
 }
 
-const KW=/\b(label|menu|jump|call|return|scene|show|hide|with|define|default|image|pass|pause|at|as|play|stop|queue|init|python|if|elif|else|while)\b/g;
+const KW=/\b(label|menu|jump|call|return|scene|show|hide|with|define|default|preferences|image|pass|pause|at|as|play|stop|queue|init|python|if|elif|else|while)\b/g;
 function paint(src){
   const e=s=>s.replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
   return src.split("\n").map(l=>{
