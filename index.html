@@ -501,8 +501,8 @@ function blank(t){
 function push(t){
   if((t==="say"||t==="show"||t==="hide")&&!p.characters.length){openCast();return}
   const n=Object.assign(blank(t),{id:uid()});
-  p.script.splice(cur+1||p.script.length,0,n);
-  cur=Math.min(cur+1,p.script.length-1);
+  p.script.push(n);
+  cur=p.script.length-1;
   render();
   document.getElementById("ln"+n.id)?.scrollIntoView({block:"nearest"});
 }
